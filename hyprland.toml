@@ -1,0 +1,5 @@
+[plugin]
+name = "hyprland-vdm"
+version = "0.1.0"
+author = "Your Name"
+description = "Virtual Desktop Manager for Hyprland"
