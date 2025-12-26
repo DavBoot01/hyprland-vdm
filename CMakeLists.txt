@@ -16,6 +16,7 @@ pkg_check_modules(HYPRLAND REQUIRED hyprland)
 # Plugin source files
 add_library(hyprland-vdm MODULE
     src/main.cpp
+    src/commands.cpp
 )
 
 # Compiler flags

@@ -1,5 +1,11 @@
 #pragma once
 
+#include <hyprland/src/plugins/PluginAPI.hpp>
+#include <format>
+
+// Plugin metadata
+inline HANDLE PHANDLE = nullptr;
+
 namespace VDM {
     constexpr const char* PLUGIN_NAME = "hyprland-vdm";
     constexpr const char* PLUGIN_DESCRIPTION = "Virtual Desktop Manager for Hyprland";
