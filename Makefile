@@ -11,6 +11,12 @@ build: configure
 install: build
 	cmake --install build
 
+load: build
+	hyprctl plugin load ${PWD}/build/libhyprland-vdm.so
+
+unload:
+	hyprctl plugin unload ${PWD}/build/libhyprland-vdm.so
+
 clean:
 	rm -rf build
 
