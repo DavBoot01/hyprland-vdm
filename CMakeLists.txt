@@ -12,11 +12,13 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Find Hyprland
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(HYPRLAND REQUIRED hyprland)
+pkg_check_modules(DRM REQUIRED libdrm)
 
 # Plugin source files
 add_library(hyprland-vdm MODULE
     src/main.cpp
     src/commands.cpp
+    src/workspace_manager.cpp
 )
 
 # Compiler flags
@@ -34,6 +36,7 @@ target_include_directories(hyprland-vdm PRIVATE
 # System include directories (suppress warnings from external headers)
 target_include_directories(hyprland-vdm SYSTEM PRIVATE
     ${HYPRLAND_INCLUDE_DIRS}
+    ${DRM_INCLUDE_DIRS}
     /usr/include/hyprland/protocols
     /usr/include/hyprland/wlroots
     /usr/include/pixman-1

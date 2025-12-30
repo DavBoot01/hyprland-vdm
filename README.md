@@ -13,6 +13,7 @@ This is a minimal, ready-to-compile Hyprland plugin skeleton using C++23 and CMa
 - ✅ Makefile wrapper for convenient commands
 - ✅ Plugin lifecycle management (init/exit)
 - ✅ Notification system integration
+- ✅ **CWorkspaceManager singleton** for workspace/monitor management
 - ✅ Ready for extension with custom dispatchers and event handlers
 
 ## Building
