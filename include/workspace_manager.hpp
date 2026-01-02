@@ -15,10 +15,10 @@ namespace VDM {
  * @brief Workspace information structure
  */
 struct WorkspaceInfo {
-    int32_t id;
+    WORKSPACEID id;
     std::string name;
     std::string monitorName;
-    int32_t monitorID;
+    MONITORID monitorID;
     int32_t windowCount;
     bool isActive;
     bool hasFullscreen;
@@ -28,7 +28,7 @@ struct WorkspaceInfo {
  * @brief Monitor information structure
  */
 struct MonitorInfo {
-    int32_t id;
+    MONITORID id;
     std::string name;
     std::string description;
     int32_t width;
@@ -36,9 +36,9 @@ struct MonitorInfo {
     float refreshRate;
     int32_t x;
     int32_t y;
-    int32_t activeWorkspaceID;
+    WORKSPACEID activeWorkspaceID;
     std::string activeWorkspaceName;
-    std::vector<int32_t> workspaces;
+    std::vector<WORKSPACEID> workspaces;
 };
 
 /**
@@ -74,12 +74,12 @@ private:
     /**
      * @brief Helper to get workspace by ID
      */
-    PHLWORKSPACE getWorkspaceByID(int32_t id);
+    PHLWORKSPACE getWorkspaceByID(WORKSPACEID id);
 
     /**
      * @brief Helper to get monitor by ID
      */
-    CMonitor* getMonitorByID(int32_t id);
+    CMonitor* getMonitorByID(MONITORID id);
 
     /**
      * @brief Helper to get monitor by name
@@ -112,7 +112,7 @@ public:
      * @param name Workspace name (optional)
      * @return Workspace ID if successful, -1 on failure
      */
-    int32_t createWorkspace(std::optional<int32_t> id = std::nullopt, 
+    WORKSPACEID createWorkspace(std::optional<WORKSPACEID> id = std::nullopt, 
                            const std::string& name = "");
 
     /**
@@ -120,14 +120,14 @@ public:
      * @param id Workspace ID
      * @return true if successful, false otherwise
      */
-    bool deleteWorkspace(int32_t id);
+    bool deleteWorkspace(WORKSPACEID id);
 
     /**
      * @brief Switch to a workspace
      * @param id Workspace ID
      * @return true if successful, false otherwise
      */
-    bool switchToWorkspace(int32_t id);
+    bool switchToWorkspace(WORKSPACEID id);
 
     /**
      * @brief Move workspace to a specific monitor
@@ -135,7 +135,7 @@ public:
      * @param monitorID Monitor ID or monitor name
      * @return true if successful, false otherwise
      */
-    bool moveWorkspaceToMonitor(int32_t workspaceID, const std::string& monitorID);
+    bool moveWorkspaceToMonitor(WORKSPACEID workspaceID, const std::string& monitorID);
 
     /**
      * @brief Rename a workspace
@@ -143,7 +143,7 @@ public:
      * @param newName New name for the workspace
      * @return true if successful, false otherwise
      */
-    bool renameWorkspace(int32_t id, const std::string& newName);
+    bool renameWorkspace(WORKSPACEID id, const std::string& newName);
 
     // Query operations
 
@@ -158,20 +158,20 @@ public:
      * @param id Workspace ID
      * @return Optional WorkspaceInfo, nullopt if workspace not found
      */
-    std::optional<WorkspaceInfo> getWorkspaceInfo(int32_t id);
+    std::optional<WorkspaceInfo> getWorkspaceInfo(WORKSPACEID id);
 
     /**
      * @brief Get active workspace ID
      * @return Active workspace ID, or -1 if none
      */
-    int32_t getActiveWorkspaceID();
+    WORKSPACEID getActiveWorkspaceID();
 
     /**
      * @brief Get workspaces on a specific monitor
      * @param monitorID Monitor ID or name
      * @return Vector of workspace IDs
      */
-    std::vector<int32_t> getWorkspacesOnMonitor(const std::string& monitorID);
+    std::vector<WORKSPACEID> getWorkspacesOnMonitor(const std::string& monitorID);
 
     // Monitor operations
 
@@ -227,13 +227,13 @@ public:
      * @param id Workspace ID
      * @return true if workspace exists, false otherwise
      */
-    bool workspaceExists(int32_t id);
+    bool workspaceExists(WORKSPACEID id);
 
     /**
      * @brief Get next available workspace ID
      * @return Next available workspace ID
      */
-    int32_t getNextAvailableWorkspaceID();
+    WORKSPACEID getNextAvailableWorkspaceID();
 
     /**
      * @brief Get total window count across all workspaces

@@ -30,14 +30,14 @@ void CWorkspaceManager::initialize(HANDLE handle) {
     m_hHandle = handle;
 }
 
-PHLWORKSPACE CWorkspaceManager::getWorkspaceByID(int32_t id) {
+PHLWORKSPACE CWorkspaceManager::getWorkspaceByID(WORKSPACEID id) {
     if (!g_pCompositor)
         return nullptr;
     
     return g_pCompositor->getWorkspaceByID(id);
 }
 
-CMonitor* CWorkspaceManager::getMonitorByID(int32_t id) {
+CMonitor* CWorkspaceManager::getMonitorByID(MONITORID id) {
     if (!g_pCompositor)
         return nullptr;
     
@@ -55,11 +55,11 @@ CMonitor* CWorkspaceManager::getMonitorByName(const std::string& name) {
 
 // Workspace management operations
 
-int32_t CWorkspaceManager::createWorkspace(std::optional<int32_t> id, const std::string& name) {
+WORKSPACEID CWorkspaceManager::createWorkspace(std::optional<WORKSPACEID> id, const std::string& name) {
     if (!g_pCompositor || !m_hHandle)
         return -1;
 
-    int32_t workspaceID = id.value_or(getNextAvailableWorkspaceID());
+    WORKSPACEID workspaceID = id.value_or(getNextAvailableWorkspaceID());
     
     // Check if workspace already exists
     if (workspaceExists(workspaceID)) {
@@ -95,7 +95,7 @@ int32_t CWorkspaceManager::createWorkspace(std::optional<int32_t> id, const std:
     return workspaceID;
 }
 
-bool CWorkspaceManager::deleteWorkspace(int32_t id) {
+bool CWorkspaceManager::deleteWorkspace(WORKSPACEID id) {
     if (!g_pCompositor || !m_hHandle)
         return false;
 
@@ -141,14 +141,14 @@ bool CWorkspaceManager::deleteWorkspace(int32_t id) {
     return true;
 }
 
-bool CWorkspaceManager::switchToWorkspace(int32_t id) {
+bool CWorkspaceManager::switchToWorkspace(WORKSPACEID id) {
     if (!g_pCompositor || !m_hHandle)
         return false;
 
     auto workspace = getWorkspaceByID(id);
     if (!workspace) {
         // Workspace doesn't exist, create it first
-        int32_t newID = createWorkspace(id);
+        WORKSPACEID newID = createWorkspace(id);
         if (newID == -1)
             return false;
         workspace = getWorkspaceByID(newID);
@@ -166,7 +166,7 @@ bool CWorkspaceManager::switchToWorkspace(int32_t id) {
     return false;
 }
 
-bool CWorkspaceManager::moveWorkspaceToMonitor(int32_t workspaceID, const std::string& monitorID) {
+bool CWorkspaceManager::moveWorkspaceToMonitor(WORKSPACEID workspaceID, const std::string& monitorID) {
     if (!g_pCompositor || !m_hHandle)
         return false;
 
@@ -182,7 +182,7 @@ bool CWorkspaceManager::moveWorkspaceToMonitor(int32_t workspaceID, const std::s
     CMonitor* monitor = getMonitorByName(monitorID);
     if (!monitor) {
         try {
-            int32_t monID = std::stoi(monitorID);
+            MONITORID monID = std::stoll(monitorID);
             monitor = getMonitorByID(monID);
         } catch (...) {
             // Invalid monitor ID
@@ -207,7 +207,7 @@ bool CWorkspaceManager::moveWorkspaceToMonitor(int32_t workspaceID, const std::s
     return true;
 }
 
-bool CWorkspaceManager::renameWorkspace(int32_t id, const std::string& newName) {
+bool CWorkspaceManager::renameWorkspace(WORKSPACEID id, const std::string& newName) {
     if (!g_pCompositor || !m_hHandle)
         return false;
 
@@ -270,7 +270,7 @@ std::vector<WorkspaceInfo> CWorkspaceManager::getAllWorkspaces() {
     return workspaces;
 }
 
-std::optional<WorkspaceInfo> CWorkspaceManager::getWorkspaceInfo(int32_t id) {
+std::optional<WorkspaceInfo> CWorkspaceManager::getWorkspaceInfo(WORKSPACEID id) {
     if (!g_pCompositor)
         return std::nullopt;
 
@@ -305,14 +305,14 @@ std::optional<WorkspaceInfo> CWorkspaceManager::getWorkspaceInfo(int32_t id) {
     return info;
 }
 
-int32_t CWorkspaceManager::getActiveWorkspaceID() {
+WORKSPACEID CWorkspaceManager::getActiveWorkspaceID() {
     if (!g_pCompositor)
         return -1;
 
-    auto monitor = g_pCompositor->m_lastMonitor.lock();
+    auto* monitor = getActiveMonitor();
     if (!monitor)
         return -1;
-        
+
     auto workspace = monitor->m_activeWorkspace;
     if (!workspace)
         return -1;
@@ -320,8 +320,8 @@ int32_t CWorkspaceManager::getActiveWorkspaceID() {
     return workspace->m_id;
 }
 
-std::vector<int32_t> CWorkspaceManager::getWorkspacesOnMonitor(const std::string& monitorID) {
-    std::vector<int32_t> workspaceIDs;
+std::vector<WORKSPACEID> CWorkspaceManager::getWorkspacesOnMonitor(const std::string& monitorID) {
+    std::vector<WORKSPACEID> workspaceIDs;
     
     if (!g_pCompositor)
         return workspaceIDs;
@@ -330,7 +330,7 @@ std::vector<int32_t> CWorkspaceManager::getWorkspacesOnMonitor(const std::string
     CMonitor* monitor = getMonitorByName(monitorID);
     if (!monitor) {
         try {
-            int32_t monID = std::stoi(monitorID);
+            MONITORID monID = std::stoll(monitorID);
             monitor = getMonitorByID(monID);
         } catch (...) {
             return workspaceIDs;
@@ -401,7 +401,7 @@ std::optional<MonitorInfo> CWorkspaceManager::getMonitorInfo(const std::string& 
     CMonitor* monitor = getMonitorByName(id);
     if (!monitor) {
         try {
-            int32_t monID = std::stoi(id);
+            MONITORID monID = std::stoll(id);
             monitor = getMonitorByID(monID);
         } catch (...) {
             return std::nullopt;
@@ -444,8 +444,15 @@ CMonitor* CWorkspaceManager::getActiveMonitor() {
     if (!g_pCompositor)
         return nullptr;
 
-    auto monitor = g_pCompositor->m_lastMonitor.lock();
-    return monitor.get();
+    if (auto monitor = g_pCompositor->getMonitorFromCursor(); monitor)
+        return monitor.get();
+
+    for (const auto& mon : g_pCompositor->m_realMonitors) {
+        if (mon)
+            return mon.get();
+    }
+
+    return nullptr;
 }
 
 size_t CWorkspaceManager::getMonitorCount() {
@@ -510,15 +517,15 @@ LayoutInfo CWorkspaceManager::getLayoutInfo() {
 
 // Utility functions
 
-bool CWorkspaceManager::workspaceExists(int32_t id) {
+bool CWorkspaceManager::workspaceExists(WORKSPACEID id) {
     return getWorkspaceByID(id) != nullptr;
 }
 
-int32_t CWorkspaceManager::getNextAvailableWorkspaceID() {
+WORKSPACEID CWorkspaceManager::getNextAvailableWorkspaceID() {
     if (!g_pCompositor)
         return 1;
 
-    int32_t maxID = 0;
+    WORKSPACEID maxID = 0;
     for (auto& workspace : g_pCompositor->getWorkspaces()) {
         if (workspace && workspace->m_id > maxID) {
             maxID = workspace->m_id;
