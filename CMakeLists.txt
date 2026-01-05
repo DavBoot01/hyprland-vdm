@@ -21,6 +21,9 @@ add_library(hyprland-vdm MODULE
     src/commands.cpp
     src/workspace_manager.cpp
     src/LoggerFacade.cpp
+    src/VirtualDesktop.cpp
+    src/Layout.cpp
+    src/VirtualDesktopManager.cpp
 )
 
 # Compiler flags
