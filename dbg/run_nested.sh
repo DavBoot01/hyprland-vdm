@@ -133,7 +133,7 @@ PREVIOUS_SESSIONS=$(ls -1 -t $XDG_RUNTIME_DIR/hypr/ 2>/dev/null)
 # >> Launch Hyprland in the background (nested mode)
 echo "Launching nested Hyprland instance..."
 # We use a temporary log file for the nested session
- Hyprland --config ${SCRIPT_DIR}/hyprland_test.conf > ${SCRIPT_DIR}/hyprland_nested.log 2>&1 &
+ start-hyprland -- --config ${SCRIPT_DIR}/hyprland_test.conf > ${SCRIPT_DIR}/hyprland_nested.log 2>&1 &
 HYPR_PID=$!
 
 # >> Wait for the new socket to be created
