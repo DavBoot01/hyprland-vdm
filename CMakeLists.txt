@@ -19,7 +19,7 @@ pkg_check_modules(DRM REQUIRED libdrm)
 add_library(hyprland-vdm MODULE
     src/main.cpp
     src/commands.cpp
-    src/workspace_manager.cpp
+    src/HyprlandUtils.cpp
     src/LoggerFacade.cpp
     src/VirtualDesktop.cpp
     src/Layout.cpp
