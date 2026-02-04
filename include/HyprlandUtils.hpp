@@ -170,6 +170,17 @@ public:
     bool switchToWorkspace(WorkspaceId id);
 
     /**
+     * @brief Switches a specific monitor to a workspace.
+     *
+     * This is useful when orchestrating multi-monitor virtual desktops.
+     *
+     * @param workspaceID Workspace id.
+     * @param monitorSelector Monitor selector: either monitor name or numeric id string.
+     * @return true on success.
+     */
+    bool switchToWorkspaceOnMonitor(WorkspaceId workspaceID, std::string_view monitorSelector);
+
+    /**
      * @brief Moves a workspace to a monitor.
      * @param workspaceID Workspace id.
      * @param monitorSelector Monitor selector: either monitor name or numeric id string.
@@ -180,6 +191,18 @@ public:
      * @brief Renames a workspace.
      */
     bool renameWorkspace(WorkspaceId id, std::string_view newName);
+
+    /**
+     * @brief Marks a workspace as persistent/permanent (best-effort).
+     *
+     * Some Hyprland versions support a persistent flag on workspaces which prevents
+     * automatic cleanup of empty/inactive workspaces.
+     *
+     * @param id Workspace id.
+     * @param persistent Whether the workspace should be persistent.
+     * @return true if the workspace was found and the operation was applied (or not needed).
+     */
+    bool setWorkspacePersistent(WorkspaceId id, bool persistent = true);
 
     // Query operations
     /**

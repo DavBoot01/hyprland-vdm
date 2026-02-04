@@ -22,6 +22,19 @@
 namespace VDM {
 
 namespace {
+static bool applyWorkspacePersistentFlag(const PHLWORKSPACE& workspace, bool persistent) {
+    if (!workspace)
+        return false;
+
+    // Hyprland internals evolve; use the public API when available.
+    if constexpr (requires { workspace->setPersistent(persistent); }) {
+        workspace->setPersistent(persistent);
+        return true;
+    }
+
+    // Unknown Hyprland version/ABI: we cannot set persistence.
+    return false;
+}
 
 /**
  * @brief Builds the final notification message by applying an optional prefix.
@@ -75,12 +88,19 @@ Hyprutils::Memory::CSharedPointer<CMonitor> getMonitorBySelector(std::string_vie
         return {};
 
     // Try by name first.
-    if (auto monByName = g_pCompositor->getMonitorFromName(std::string(selector)); monByName)
+    if (auto monByName = g_pCompositor->getMonitorFromName(std::string(selector)); monByName) {
+        if (monByName->m_id < 0 || monByName->m_name.empty())
+            return {};
         return monByName;
+    }
 
     // Then try as numeric id.
-    if (const auto id = tryParseMonitorId(selector); id.has_value())
-        return g_pCompositor->getMonitorFromID(*id);
+    if (const auto id = tryParseMonitorId(selector); id.has_value()) {
+        auto monById = g_pCompositor->getMonitorFromID(*id);
+        if (!monById || monById->m_id < 0 || monById->m_name.empty())
+            return {};
+        return monById;
+    }
 
     return {};
 }
@@ -245,6 +265,29 @@ bool CHyprlandUtils::switchToWorkspace(WorkspaceId id) {
     return false;
 }
 
+bool CHyprlandUtils::switchToWorkspaceOnMonitor(WorkspaceId workspaceID, std::string_view monitorSelector) {
+    if (!g_pCompositor || !m_hHandle)
+        return false;
+
+    // Ensure workspace exists.
+    auto workspace = g_pCompositor->getWorkspaceByID(workspaceID);
+    if (!workspace) {
+        const auto newID = createWorkspace(workspaceID);
+        if (newID == -1)
+            return false;
+        workspace = g_pCompositor->getWorkspaceByID(newID);
+        if (!workspace)
+            return false;
+    }
+
+    auto monitor = getMonitorBySelector(monitorSelector);
+    if (!monitor)
+        return false;
+
+    monitor->changeWorkspace(workspaceID);
+    return true;
+}
+
 bool CHyprlandUtils::moveWorkspaceToMonitor(WorkspaceId workspaceID, std::string_view monitorSelector) {
     if (!g_pCompositor || !m_hHandle)
         return false;
@@ -282,6 +325,18 @@ bool CHyprlandUtils::renameWorkspace(WorkspaceId id, std::string_view newName) {
 
     notify(NotificationLevel::Info, std::format("Renamed workspace {} to '{}'", id, newName));
     return true;
+}
+
+bool CHyprlandUtils::setWorkspacePersistent(WorkspaceId id, bool persistent) {
+    if (!g_pCompositor)
+        return false;
+
+    auto workspace = g_pCompositor->getWorkspaceByID(id);
+    if (!workspace)
+        return false;
+
+    // Best-effort; if unsupported by this Hyprland version, return false.
+    return applyWorkspacePersistentFlag(workspace, persistent);
 }
 
 std::vector<CHyprlandUtils::WorkspaceInfo> CHyprlandUtils::getAllWorkspaces() const {
@@ -407,6 +462,11 @@ std::vector<CHyprlandUtils::MonitorInfo> CHyprlandUtils::getAllMonitors() const 
         if (!monitor)
             continue;
 
+        // Hyprland can keep placeholder/invalid monitors around (e.g. fallback/unset).
+        // Filter them out for a cleaner and more stable external API.
+        if (monitor->m_id < 0 || monitor->m_name.empty())
+            continue;
+
         MonitorInfo info;
         info.id = monitor->m_id;
         info.name = monitor->m_name;
@@ -443,6 +503,9 @@ std::optional<CHyprlandUtils::MonitorInfo> CHyprlandUtils::getMonitorInfo(std::s
     if (!monitor)
         return std::nullopt;
 
+    if (monitor->m_id < 0 || monitor->m_name.empty())
+        return std::nullopt;
+
     MonitorInfo info;
     info.id = monitor->m_id;
     info.name = monitor->m_name;
@@ -477,11 +540,13 @@ std::optional<CHyprlandUtils::MonitorId> CHyprlandUtils::getActiveMonitorID() co
     if (!g_pCompositor)
         return std::nullopt;
 
-    if (auto monitor = g_pCompositor->getMonitorFromCursor(); monitor)
-        return monitor->m_id;
+    if (auto monitor = g_pCompositor->getMonitorFromCursor(); monitor) {
+        if (monitor->m_id >= 0 && !monitor->m_name.empty())
+            return monitor->m_id;
+    }
 
     for (const auto& mon : g_pCompositor->m_realMonitors) {
-        if (mon)
+        if (mon && mon->m_id >= 0 && !mon->m_name.empty())
             return mon->m_id;
     }
 
@@ -492,7 +557,12 @@ size_t CHyprlandUtils::getMonitorCount() const {
     if (!g_pCompositor)
         return 0;
 
-    return g_pCompositor->m_realMonitors.size();
+    size_t count = 0;
+    for (const auto& mon : g_pCompositor->m_realMonitors) {
+        if (mon && mon->m_id >= 0 && !mon->m_name.empty())
+            ++count;
+    }
+    return count;
 }
 
 std::string CHyprlandUtils::getCurrentLayout() const {
