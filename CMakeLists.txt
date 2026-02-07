@@ -15,8 +15,11 @@ pkg_check_modules(HYPRLAND REQUIRED hyprland)
 pkg_check_modules(HYPRUTILS REQUIRED hyprutils)
 pkg_check_modules(DRM REQUIRED libdrm)
 
+# Find nlohmann/json
+find_package(nlohmann_json 3.11.0 REQUIRED)
+
 # Plugin source files
-add_library(hyprland-vdm MODULE
+add_library(${PROJECT_NAME} MODULE
     src/main.cpp
     src/commands.cpp
     src/HyprlandUtils.cpp
@@ -26,20 +29,36 @@ add_library(hyprland-vdm MODULE
     src/VirtualDesktopManager.cpp
 )
 
+# nlohmann/json integration (prefer system package, fallback to header-only)
+if (nlohmann_json_FOUND)
+    target_link_libraries(
+        ${PROJECT_NAME} 
+        PRIVATE 
+        nlohmann_json::nlohmann_json
+    )
+else()
+    message(STATUS "nlohmann_json not found, falling back to header-only include in ${CMAKE_SOURCE_DIR}/include")
+    target_include_directories(
+        ${PROJECT_NAME} 
+        PRIVATE 
+        ${CMAKE_SOURCE_DIR}/include
+    )
+endif()
+
 # Compiler flags
-target_compile_options(hyprland-vdm PRIVATE
+target_compile_options(${PROJECT_NAME} PRIVATE
     -Wall
     -Wextra
     -g
 )
 
 # Include directories (our own headers)
-target_include_directories(hyprland-vdm PRIVATE
+target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/include
 )
 
 # System include directories (suppress warnings from external headers)
-target_include_directories(hyprland-vdm SYSTEM PRIVATE
+target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE
     ${HYPRLAND_INCLUDE_DIRS}
     ${HYPRUTILS_INCLUDE_DIRS}
     ${DRM_INCLUDE_DIRS}
@@ -49,12 +68,12 @@ target_include_directories(hyprland-vdm SYSTEM PRIVATE
 )
 
 # Link options
-target_link_libraries(hyprland-vdm PRIVATE
+target_link_libraries(${PROJECT_NAME} PRIVATE
     ${HYPRLAND_LIBRARIES}
     ${HYPRUTILS_LINK_LIBRARIES}
 )
 
 # Installation
-install(TARGETS hyprland-vdm
+install(TARGETS ${PROJECT_NAME}
     LIBRARY DESTINATION $ENV{HOME}/.config/hypr/plugins
 )
