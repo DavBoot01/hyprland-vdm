@@ -153,9 +153,12 @@ public:
      * @brief Creates a workspace.
      * @param id Optional explicit workspace id. If not provided, the next available id is used.
      * @param name Optional name. If empty, a default name is used.
+     * @param silent If true, suppresses the success notification (errors are still reported).
      * @return The created workspace id on success, or -1 on failure.
      */
-    WorkspaceId createWorkspace(std::optional<WorkspaceId> id = std::nullopt, std::string_view name = "");
+    WorkspaceId createWorkspace(std::optional<WorkspaceId> id = std::nullopt,
+                                std::string_view name = "",
+                                bool silent = false);
 
     /**
      * @brief Deletes a workspace.
@@ -184,8 +187,10 @@ public:
      * @brief Moves a workspace to a monitor.
      * @param workspaceID Workspace id.
      * @param monitorSelector Monitor selector: either monitor name or numeric id string.
+     * @param silent If true, suppresses the success notification (errors are still reported).
      */
-    bool moveWorkspaceToMonitor(WorkspaceId workspaceID, std::string_view monitorSelector);
+    bool moveWorkspaceToMonitor(WorkspaceId workspaceID, std::string_view monitorSelector,
+                                bool silent = false);
 
     /**
      * @brief Renames a workspace.

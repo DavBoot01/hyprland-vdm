@@ -12,7 +12,7 @@
 #include <hyprland/src/Compositor.hpp>
 #include <hyprland/src/desktop/Workspace.hpp>
 #include <hyprland/src/helpers/Monitor.hpp>
-#include <hyprland/src/managers/LayoutManager.hpp>
+#include <hyprland/src/layout/LayoutManager.hpp>
 
 #include <algorithm>
 #include <charconv>
@@ -169,7 +169,9 @@ void CHyprlandUtils::notify(NotificationLevel level, std::string_view message, i
                                  durationMs);
 }
 
-CHyprlandUtils::WorkspaceId CHyprlandUtils::createWorkspace(std::optional<WorkspaceId> id, std::string_view name) {
+CHyprlandUtils::WorkspaceId CHyprlandUtils::createWorkspace(std::optional<WorkspaceId> id,
+                                                            std::string_view name,
+                                                            bool silent) {
     if (!g_pCompositor || !m_hHandle)
         return -1;
 
@@ -204,7 +206,9 @@ CHyprlandUtils::WorkspaceId CHyprlandUtils::createWorkspace(std::optional<Worksp
         return -1;
     }
 
-    notify(NotificationLevel::Info, std::format("Created workspace {} ({})", workspaceID, wsName));
+    if (!silent)
+        notify(NotificationLevel::Info, std::format("Created workspace {} ({})", workspaceID, wsName));
+
     return workspaceID;
 }
 
@@ -288,7 +292,8 @@ bool CHyprlandUtils::switchToWorkspaceOnMonitor(WorkspaceId workspaceID, std::st
     return true;
 }
 
-bool CHyprlandUtils::moveWorkspaceToMonitor(WorkspaceId workspaceID, std::string_view monitorSelector) {
+bool CHyprlandUtils::moveWorkspaceToMonitor(WorkspaceId workspaceID, std::string_view monitorSelector,
+                                            bool silent) {
     if (!g_pCompositor || !m_hHandle)
         return false;
 
@@ -307,7 +312,10 @@ bool CHyprlandUtils::moveWorkspaceToMonitor(WorkspaceId workspaceID, std::string
     auto pMonitor = g_pCompositor->getMonitorFromID(monitor->m_id);
     g_pCompositor->moveWorkspaceToMonitor(workspace, pMonitor);
 
-    notify(NotificationLevel::Info, std::format("Moved workspace {} to monitor {}", workspaceID, monitor->m_name));
+    if (!silent)
+        notify(NotificationLevel::Info,
+               std::format("Moved workspace {} to monitor {}", workspaceID, monitor->m_name));
+
     return true;
 }
 
@@ -566,51 +574,20 @@ size_t CHyprlandUtils::getMonitorCount() const {
 }
 
 std::string CHyprlandUtils::getCurrentLayout() const {
-    if (!g_pLayoutManager)
-        return "unknown";
-
-    auto layout = g_pLayoutManager->getCurrentLayout();
-    return layout ? layout->getLayoutName() : "unknown";
+    // NOTE: Hyprland 0.54 redesigned CLayoutManager into a window-operation manager;
+    // per-monitor layout selection is no longer queryable via a global. Return unknown
+    // until a replacement API is identified.
+    return "unknown";
 }
 
 std::vector<std::string> CHyprlandUtils::getAvailableLayouts() const {
-    std::vector<std::string> layouts;
-
-    if (!g_pLayoutManager)
-        return layouts;
-
-    auto currentLayout = g_pLayoutManager->getCurrentLayout();
-    if (currentLayout) {
-        layouts.push_back(currentLayout->getLayoutName());
-    }
-
-    if (std::find(layouts.begin(), layouts.end(), "dwindle") == layouts.end())
-        layouts.push_back("dwindle");
-    if (std::find(layouts.begin(), layouts.end(), "master") == layouts.end())
-        layouts.push_back("master");
-
-    return layouts;
+    // NOTE: Hyprland 0.54 does not expose a runtime list of available layouts.
+    // Return the known built-in set; update when a query API becomes available.
+    return {"dwindle", "master"};
 }
 
 CHyprlandUtils::LayoutInfo CHyprlandUtils::getLayoutInfo() const {
-    LayoutInfo info;
-
-    if (!g_pLayoutManager) {
-        info.name = "unknown";
-        info.description = "Layout manager not available";
-        return info;
-    }
-
-    auto layout = g_pLayoutManager->getCurrentLayout();
-    if (layout) {
-        info.name = layout->getLayoutName();
-        info.description = std::format("Current layout: {}", info.name);
-    } else {
-        info.name = "unknown";
-        info.description = "No layout active";
-    }
-
-    return info;
+    return {.name = "unknown", .description = "Layout query not supported in this Hyprland version"};;
 }
 
 bool CHyprlandUtils::workspaceExists(WorkspaceId id) const {
