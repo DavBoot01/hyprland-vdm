@@ -198,6 +198,10 @@ CHyprlandUtils::WorkspaceId CHyprlandUtils::createWorkspace(std::optional<Worksp
     }
 
     auto pMonitor = g_pCompositor->getMonitorFromID(activeMonitor->m_id);
+    if (!pMonitor) {
+        notify(NotificationLevel::Error, "Active monitor disappeared before workspace creation");
+        return -1;
+    }
     const std::string wsName = name.empty() ? std::to_string(workspaceID) : std::string(name);
 
     auto workspace = CWorkspace::create(workspaceID, pMonitor, wsName);
@@ -261,7 +265,8 @@ bool CHyprlandUtils::switchToWorkspace(WorkspaceId id) {
             return false;
     }
 
-    if (auto monitor = g_pCompositor->getMonitorFromCursor(); monitor) {
+    if (auto monitor = g_pCompositor->getMonitorFromCursor();
+        monitor && monitor->m_id >= 0 && !monitor->m_name.empty()) {
         monitor->changeWorkspace(id);
         return true;
     }
@@ -310,6 +315,10 @@ bool CHyprlandUtils::moveWorkspaceToMonitor(WorkspaceId workspaceID, std::string
     }
 
     auto pMonitor = g_pCompositor->getMonitorFromID(monitor->m_id);
+    if (!pMonitor) {
+        notify(NotificationLevel::Warn, std::format("Monitor {} disappeared before workspace move", monitorSelector));
+        return false;
+    }
     g_pCompositor->moveWorkspaceToMonitor(workspace, pMonitor);
 
     if (!silent)
@@ -447,8 +456,10 @@ CHyprlandUtils::WorkspaceId CHyprlandUtils::getActiveWorkspaceID() const {
 std::vector<CHyprlandUtils::WorkspaceId> CHyprlandUtils::getWorkspacesOnMonitor(std::string_view monitorSelector) const {
     std::vector<WorkspaceId> workspaceIDs;
 
+    if (!g_pCompositor)
+        return workspaceIDs;
     auto monitor = getMonitorBySelector(monitorSelector);
-    if (!monitor || !g_pCompositor)
+    if (!monitor)
         return workspaceIDs;
 
     for (auto& workspace : g_pCompositor->getWorkspaces()) {
