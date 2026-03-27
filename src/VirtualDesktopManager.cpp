@@ -14,11 +14,20 @@ CVirtualDesktopManager& CVirtualDesktopManager::getInstance() {
 
 void CVirtualDesktopManager::initialize(int vdeskCount, int workspaceStride) {
     m_hypr = &CHyprlandUtils::get();
-    m_workspaceStride = std::max(1, workspaceStride);
 
     const int defaultCount = 5;
     const int finalCount = vdeskCount > 0 ? vdeskCount : defaultCount;
     m_layout.setVirtualDesktopCount(finalCount);
+
+    // Stride must exceed the desktop count or workspaces on adjacent monitors collide.
+    // e.g. stride=1, 2 monitors: Mon[0]/VD2 and Mon[1]/VD1 both map to WS2.
+    const int minStride = finalCount + 1;
+    if (workspaceStride > 0 && workspaceStride < minStride) {
+        AppLog::logWarn(std::format(
+            "initialize: workspaceStride {} is too small for {} desktops (min {}); clamping",
+            workspaceStride, finalCount, minStride));
+    }
+    m_workspaceStride = std::max(minStride, std::max(1, workspaceStride));
 
     m_initialized = m_hypr->isInitialized();
     syncFromHyprland();
@@ -31,7 +40,13 @@ void CVirtualDesktopManager::shutdown() {
 }
 
 void CVirtualDesktopManager::setVirtualDesktopCount(int count) {
-    m_layout.setVirtualDesktopCount(std::max(0, count));
+    const int clamped = std::max(0, count);
+    if (clamped >= m_workspaceStride) {
+        AppLog::logWarn(std::format(
+            "setVirtualDesktopCount: count {} >= stride {}; workspace IDs will collide across monitors",
+            clamped, m_workspaceStride));
+    }
+    m_layout.setVirtualDesktopCount(clamped);
     syncFromHyprland();
 }
 
