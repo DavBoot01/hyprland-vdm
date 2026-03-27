@@ -88,7 +88,7 @@ public:
     /**
      * @brief Returns the singleton instance.
      */
-    static CHyprlandUtils& get();
+    static CHyprlandUtils &get();
 
     /**
      * @brief Initializes the façade with the plugin handle.
@@ -125,8 +125,7 @@ public:
      * @note If a level color is not configured (std::nullopt), notifications for
      * that level are suppressed (no-op).
      */
-    void setNotificationColors(std::optional<CHyprColor> info,
-                               std::optional<CHyprColor> warn,
+    void setNotificationColors(std::optional<CHyprColor> info, std::optional<CHyprColor> warn,
                                std::optional<CHyprColor> error);
 
     /**
@@ -135,7 +134,7 @@ public:
      * @param color Notification color.
      * @param durationMs Duration in milliseconds.
      */
-    void notify(std::string_view message, const CHyprColor& color, int durationMs = 3000) const;
+    void notify(std::string_view message, const CHyprColor &color, int durationMs = 3000) const;
 
     /**
      * @brief Emits a notification with a configured per-level color.
@@ -157,8 +156,7 @@ public:
      * @return The created workspace id on success, or -1 on failure.
      */
     WorkspaceId createWorkspace(std::optional<WorkspaceId> id = std::nullopt,
-                                std::string_view name = "",
-                                bool silent = false);
+                                std::string_view name = "", bool silent = false);
 
     /**
      * @brief Deletes a workspace.
@@ -297,8 +295,8 @@ private:
     std::optional<CHyprColor> m_errorColor;
 
     // Prevent copying
-    CHyprlandUtils(const CHyprlandUtils&) = delete;
-    CHyprlandUtils& operator=(const CHyprlandUtils&) = delete;
+    CHyprlandUtils(const CHyprlandUtils &) = delete;
+    CHyprlandUtils &operator=(const CHyprlandUtils &) = delete;
 };
 
 } // namespace VDM

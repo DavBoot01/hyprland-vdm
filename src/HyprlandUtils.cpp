@@ -22,7 +22,7 @@
 namespace VDM {
 
 namespace {
-static bool applyWorkspacePersistentFlag(const PHLWORKSPACE& workspace, bool persistent) {
+static bool applyWorkspacePersistentFlag(const PHLWORKSPACE &workspace, bool persistent) {
     if (!workspace)
         return false;
 
@@ -68,8 +68,8 @@ std::optional<CHyprlandUtils::MonitorId> tryParseMonitorId(std::string_view sele
 
     // from_chars does not accept leading whitespace; keep behavior strict.
     CHyprlandUtils::MonitorId value = 0;
-    const auto* begin = selector.data();
-    const auto* end = selector.data() + selector.size();
+    const auto *begin = selector.data();
+    const auto *end = selector.data() + selector.size();
 
     const auto [ptr, ec] = std::from_chars(begin, end, value);
     if (ec != std::errc() || ptr != end)
@@ -107,7 +107,7 @@ Hyprutils::Memory::CSharedPointer<CMonitor> getMonitorBySelector(std::string_vie
 
 } // namespace
 
-CHyprlandUtils& CHyprlandUtils::get() {
+CHyprlandUtils &CHyprlandUtils::get() {
     static CHyprlandUtils instance;
     return instance;
 }
@@ -136,42 +136,42 @@ void CHyprlandUtils::setNotificationColors(std::optional<CHyprColor> info,
     m_errorColor = error;
 }
 
-void CHyprlandUtils::notify(std::string_view message, const CHyprColor& color, int durationMs) const {
+void CHyprlandUtils::notify(std::string_view message, const CHyprColor &color,
+                            int durationMs) const {
     if (!m_hHandle)
         return;
 
-    HyprlandAPI::addNotification(m_hHandle, withOptionalPrefix(m_notificationPrefix, message), color, durationMs);
+    HyprlandAPI::addNotification(m_hHandle, withOptionalPrefix(m_notificationPrefix, message),
+                                 color, durationMs);
 }
 
-void CHyprlandUtils::notify(NotificationLevel level, std::string_view message, int durationMs) const {
+void CHyprlandUtils::notify(NotificationLevel level, std::string_view message,
+                            int durationMs) const {
     if (!m_hHandle)
         return;
 
-    const std::optional<CHyprColor>* color = nullptr;
+    const std::optional<CHyprColor> *color = nullptr;
     switch (level) {
-        case NotificationLevel::Info:
-            color = &m_infoColor;
-            break;
-        case NotificationLevel::Warn:
-            color = &m_warnColor;
-            break;
-        case NotificationLevel::Error:
-            color = &m_errorColor;
-            break;
+    case NotificationLevel::Info:
+        color = &m_infoColor;
+        break;
+    case NotificationLevel::Warn:
+        color = &m_warnColor;
+        break;
+    case NotificationLevel::Error:
+        color = &m_errorColor;
+        break;
     }
 
     if (!color || !color->has_value())
         return;
 
-    HyprlandAPI::addNotification(m_hHandle,
-                                 withOptionalPrefix(m_notificationPrefix, message),
-                                 **color,
-                                 durationMs);
+    HyprlandAPI::addNotification(m_hHandle, withOptionalPrefix(m_notificationPrefix, message),
+                                 **color, durationMs);
 }
 
 CHyprlandUtils::WorkspaceId CHyprlandUtils::createWorkspace(std::optional<WorkspaceId> id,
-                                                            std::string_view name,
-                                                            bool silent) {
+                                                            std::string_view name, bool silent) {
     if (!g_pCompositor || !m_hHandle)
         return -1;
 
@@ -184,7 +184,7 @@ CHyprlandUtils::WorkspaceId CHyprlandUtils::createWorkspace(std::optional<Worksp
     auto activeMonitor = g_pCompositor->getMonitorFromCursor();
     if (!activeMonitor) {
         // Fallback: first real monitor
-        for (const auto& mon : g_pCompositor->m_realMonitors) {
+        for (const auto &mon : g_pCompositor->m_realMonitors) {
             if (mon) {
                 activeMonitor = mon;
                 break;
@@ -211,7 +211,8 @@ CHyprlandUtils::WorkspaceId CHyprlandUtils::createWorkspace(std::optional<Worksp
     }
 
     if (!silent)
-        notify(NotificationLevel::Info, std::format("Created workspace {} ({})", workspaceID, wsName));
+        notify(NotificationLevel::Info,
+               std::format("Created workspace {} ({})", workspaceID, wsName));
 
     return workspaceID;
 }
@@ -228,11 +229,12 @@ bool CHyprlandUtils::deleteWorkspace(WorkspaceId id) {
 
     const int windowCount = workspace->getWindows();
     if (windowCount > 0) {
-        notify(NotificationLevel::Warn, std::format("Cannot delete workspace {} - contains {} windows", id, windowCount));
+        notify(NotificationLevel::Warn,
+               std::format("Cannot delete workspace {} - contains {} windows", id, windowCount));
         return false;
     }
 
-    for (const auto& monitor : g_pCompositor->m_realMonitors) {
+    for (const auto &monitor : g_pCompositor->m_realMonitors) {
         if (!monitor)
             continue;
 
@@ -274,7 +276,8 @@ bool CHyprlandUtils::switchToWorkspace(WorkspaceId id) {
     return false;
 }
 
-bool CHyprlandUtils::switchToWorkspaceOnMonitor(WorkspaceId workspaceID, std::string_view monitorSelector) {
+bool CHyprlandUtils::switchToWorkspaceOnMonitor(WorkspaceId workspaceID,
+                                                std::string_view monitorSelector) {
     if (!g_pCompositor || !m_hHandle)
         return false;
 
@@ -297,8 +300,8 @@ bool CHyprlandUtils::switchToWorkspaceOnMonitor(WorkspaceId workspaceID, std::st
     return true;
 }
 
-bool CHyprlandUtils::moveWorkspaceToMonitor(WorkspaceId workspaceID, std::string_view monitorSelector,
-                                            bool silent) {
+bool CHyprlandUtils::moveWorkspaceToMonitor(WorkspaceId workspaceID,
+                                            std::string_view monitorSelector, bool silent) {
     if (!g_pCompositor || !m_hHandle)
         return false;
 
@@ -316,7 +319,8 @@ bool CHyprlandUtils::moveWorkspaceToMonitor(WorkspaceId workspaceID, std::string
 
     auto pMonitor = g_pCompositor->getMonitorFromID(monitor->m_id);
     if (!pMonitor) {
-        notify(NotificationLevel::Warn, std::format("Monitor {} disappeared before workspace move", monitorSelector));
+        notify(NotificationLevel::Warn,
+               std::format("Monitor {} disappeared before workspace move", monitorSelector));
         return false;
     }
     g_pCompositor->moveWorkspaceToMonitor(workspace, pMonitor);
@@ -362,7 +366,7 @@ std::vector<CHyprlandUtils::WorkspaceInfo> CHyprlandUtils::getAllWorkspaces() co
     if (!g_pCompositor)
         return workspaces;
 
-    for (auto& workspace : g_pCompositor->getWorkspaces()) {
+    for (auto &workspace : g_pCompositor->getWorkspaces()) {
         if (!workspace)
             continue;
 
@@ -377,7 +381,7 @@ std::vector<CHyprlandUtils::WorkspaceInfo> CHyprlandUtils::getAllWorkspaces() co
         info.windowCount = workspace->getWindows();
 
         info.isActive = false;
-        for (const auto& mon : g_pCompositor->m_realMonitors) {
+        for (const auto &mon : g_pCompositor->m_realMonitors) {
             if (!mon)
                 continue;
 
@@ -395,7 +399,8 @@ std::vector<CHyprlandUtils::WorkspaceInfo> CHyprlandUtils::getAllWorkspaces() co
     return workspaces;
 }
 
-std::optional<CHyprlandUtils::WorkspaceInfo> CHyprlandUtils::getWorkspaceInfo(WorkspaceId id) const {
+std::optional<CHyprlandUtils::WorkspaceInfo>
+CHyprlandUtils::getWorkspaceInfo(WorkspaceId id) const {
     if (!g_pCompositor)
         return std::nullopt;
 
@@ -414,7 +419,7 @@ std::optional<CHyprlandUtils::WorkspaceInfo> CHyprlandUtils::getWorkspaceInfo(Wo
     info.windowCount = workspace->getWindows();
 
     info.isActive = false;
-    for (const auto& mon : g_pCompositor->m_realMonitors) {
+    for (const auto &mon : g_pCompositor->m_realMonitors) {
         if (!mon)
             continue;
 
@@ -435,7 +440,7 @@ CHyprlandUtils::WorkspaceId CHyprlandUtils::getActiveWorkspaceID() const {
 
     auto mon = g_pCompositor->getMonitorFromCursor();
     if (!mon) {
-        for (const auto& m : g_pCompositor->m_realMonitors) {
+        for (const auto &m : g_pCompositor->m_realMonitors) {
             if (m) {
                 mon = m;
                 break;
@@ -453,7 +458,8 @@ CHyprlandUtils::WorkspaceId CHyprlandUtils::getActiveWorkspaceID() const {
     return workspace->m_id;
 }
 
-std::vector<CHyprlandUtils::WorkspaceId> CHyprlandUtils::getWorkspacesOnMonitor(std::string_view monitorSelector) const {
+std::vector<CHyprlandUtils::WorkspaceId>
+CHyprlandUtils::getWorkspacesOnMonitor(std::string_view monitorSelector) const {
     std::vector<WorkspaceId> workspaceIDs;
 
     if (!g_pCompositor)
@@ -462,7 +468,7 @@ std::vector<CHyprlandUtils::WorkspaceId> CHyprlandUtils::getWorkspacesOnMonitor(
     if (!monitor)
         return workspaceIDs;
 
-    for (auto& workspace : g_pCompositor->getWorkspaces()) {
+    for (auto &workspace : g_pCompositor->getWorkspaces()) {
         if (workspace && workspace->monitorID() == monitor->m_id) {
             workspaceIDs.push_back(workspace->m_id);
         }
@@ -477,7 +483,7 @@ std::vector<CHyprlandUtils::MonitorInfo> CHyprlandUtils::getAllMonitors() const 
     if (!g_pCompositor)
         return monitors;
 
-    for (const auto& monitor : g_pCompositor->m_realMonitors) {
+    for (const auto &monitor : g_pCompositor->m_realMonitors) {
         if (!monitor)
             continue;
 
@@ -505,7 +511,7 @@ std::vector<CHyprlandUtils::MonitorInfo> CHyprlandUtils::getAllMonitors() const 
             info.activeWorkspaceName = "";
         }
 
-        for (auto& workspace : g_pCompositor->getWorkspaces()) {
+        for (auto &workspace : g_pCompositor->getWorkspaces()) {
             if (workspace && workspace->monitorID() == monitor->m_id) {
                 info.workspaces.push_back(workspace->m_id);
             }
@@ -517,7 +523,8 @@ std::vector<CHyprlandUtils::MonitorInfo> CHyprlandUtils::getAllMonitors() const 
     return monitors;
 }
 
-std::optional<CHyprlandUtils::MonitorInfo> CHyprlandUtils::getMonitorInfo(std::string_view monitorSelector) const {
+std::optional<CHyprlandUtils::MonitorInfo>
+CHyprlandUtils::getMonitorInfo(std::string_view monitorSelector) const {
     auto monitor = getMonitorBySelector(monitorSelector);
     if (!monitor)
         return std::nullopt;
@@ -545,7 +552,7 @@ std::optional<CHyprlandUtils::MonitorInfo> CHyprlandUtils::getMonitorInfo(std::s
     }
 
     if (g_pCompositor) {
-        for (auto& workspace : g_pCompositor->getWorkspaces()) {
+        for (auto &workspace : g_pCompositor->getWorkspaces()) {
             if (workspace && workspace->monitorID() == monitor->m_id) {
                 info.workspaces.push_back(workspace->m_id);
             }
@@ -564,7 +571,7 @@ std::optional<CHyprlandUtils::MonitorId> CHyprlandUtils::getActiveMonitorID() co
             return monitor->m_id;
     }
 
-    for (const auto& mon : g_pCompositor->m_realMonitors) {
+    for (const auto &mon : g_pCompositor->m_realMonitors) {
         if (mon && mon->m_id >= 0 && !mon->m_name.empty())
             return mon->m_id;
     }
@@ -577,7 +584,7 @@ size_t CHyprlandUtils::getMonitorCount() const {
         return 0;
 
     size_t count = 0;
-    for (const auto& mon : g_pCompositor->m_realMonitors) {
+    for (const auto &mon : g_pCompositor->m_realMonitors) {
         if (mon && mon->m_id >= 0 && !mon->m_name.empty())
             ++count;
     }
@@ -598,7 +605,9 @@ std::vector<std::string> CHyprlandUtils::getAvailableLayouts() const {
 }
 
 CHyprlandUtils::LayoutInfo CHyprlandUtils::getLayoutInfo() const {
-    return {.name = "unknown", .description = "Layout query not supported in this Hyprland version"};;
+    return {.name = "unknown",
+            .description = "Layout query not supported in this Hyprland version"};
+    ;
 }
 
 bool CHyprlandUtils::workspaceExists(WorkspaceId id) const {
@@ -613,7 +622,7 @@ CHyprlandUtils::WorkspaceId CHyprlandUtils::getNextAvailableWorkspaceID() const 
         return 1;
 
     WorkspaceId maxID = 0;
-    for (auto& workspace : g_pCompositor->getWorkspaces()) {
+    for (auto &workspace : g_pCompositor->getWorkspaces()) {
         if (workspace && workspace->m_id > maxID) {
             maxID = workspace->m_id;
         }
@@ -627,7 +636,7 @@ size_t CHyprlandUtils::getTotalWindowCount() const {
         return 0;
 
     size_t count = 0;
-    for (auto& workspace : g_pCompositor->getWorkspaces()) {
+    for (auto &workspace : g_pCompositor->getWorkspaces()) {
         if (workspace) {
             count += workspace->getWindows();
         }

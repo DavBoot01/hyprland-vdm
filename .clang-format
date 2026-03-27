@@ -1,0 +1,72 @@
+---
+Language: Cpp
+BasedOnStyle: LLVM
+
+# Indentation
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ContinuationIndentWidth: 4
+ConstructorInitializerIndentWidth: 4
+IndentCaseLabels: false
+IndentPPDirectives: None
+NamespaceIndentation: None
+
+# Column limit
+ColumnLimit: 100
+
+# Braces: opening brace on same line for all constructs
+BreakBeforeBraces: Attach
+
+# Access modifiers flush with class opening (public: / private: at column 0 of class body)
+AccessModifierOffset: -4
+
+# Pointers and references bind to the variable name
+PointerAlignment: Right
+ReferenceAlignment: Right
+
+# Short inline functions in class definitions may stay on one line
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Never
+
+# Constructor initializer lists
+BreakConstructorInitializers: BeforeColon
+PackConstructorInitializers: Never
+
+# Function parameters: align after opening paren, pack when they fit
+AlignAfterOpenBracket: Align
+BinPackParameters: true
+BinPackArguments: true
+
+# Trailing comments: align within a block of consecutive lines
+AlignTrailingComments:
+  Kind: Always
+  OverEmptyLines: 1
+
+# Consecutive declarations/assignments: do not force alignment columns
+AlignConsecutiveAssignments: None
+AlignConsecutiveDeclarations: None
+
+# Template declarations: always break before the definition body
+AlwaysBreakTemplateDeclarations: Yes
+SpaceAfterTemplateKeyword: true
+
+# Spaces
+SpaceBeforeParens: ControlStatements
+SpaceInEmptyParentheses: false
+SpacesInAngles: Never
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+
+# Include sorting: project headers → Hyprland headers → standard library
+SortIncludes: CaseSensitive
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex:    '^"'           # Project-local headers (quoted)
+    Priority: 1
+  - Regex:    '^<hyprland/'  # Hyprland internal/API headers
+    Priority: 2
+  - Regex:    '^<'           # Standard library and other system headers
+    Priority: 3

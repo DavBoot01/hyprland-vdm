@@ -7,7 +7,7 @@
 
 namespace VDM {
 
-CVirtualDesktopManager& CVirtualDesktopManager::getInstance() {
+CVirtualDesktopManager &CVirtualDesktopManager::getInstance() {
     static CVirtualDesktopManager s_instance;
     return s_instance;
 }
@@ -42,9 +42,9 @@ void CVirtualDesktopManager::shutdown() {
 void CVirtualDesktopManager::setVirtualDesktopCount(int count) {
     const int clamped = std::max(0, count);
     if (clamped >= m_workspaceStride) {
-        AppLog::logWarn(std::format(
-            "setVirtualDesktopCount: count {} >= stride {}; workspace IDs will collide across monitors",
-            clamped, m_workspaceStride));
+        AppLog::logWarn(std::format("setVirtualDesktopCount: count {} >= stride {}; workspace IDs "
+                                    "will collide across monitors",
+                                    clamped, m_workspaceStride));
     }
     m_layout.setVirtualDesktopCount(clamped);
     syncFromHyprland();
@@ -55,13 +55,13 @@ std::vector<CHyprlandUtils::MonitorInfo> CVirtualDesktopManager::getSortedMonito
         return {};
 
     auto monitors = m_hypr->getAllMonitors();
-    std::sort(monitors.begin(), monitors.end(), [](const auto& a, const auto& b) {
-        return a.name < b.name;
-    });
+    std::sort(monitors.begin(), monitors.end(),
+              [](const auto &a, const auto &b) { return a.name < b.name; });
     return monitors;
 }
 
-CHyprlandUtils::WorkspaceId CVirtualDesktopManager::computeWorkspaceIdFor(int desktopId, size_t monitorIndex) const {
+CHyprlandUtils::WorkspaceId
+CVirtualDesktopManager::computeWorkspaceIdFor(int desktopId, size_t monitorIndex) const {
     // Simple deterministic mapping: desktopId + monitorIndex*stride.
     // Example with stride=100:
     // - Monitor#0: VD 1.. => WS 1..
@@ -87,7 +87,7 @@ bool CVirtualDesktopManager::syncFromHyprland() {
     // Populate bindings for all desktops based on our deterministic mapping.
     // Also ensure that the target workspaces exist in Hyprland and live on the
     // correct monitor. Notifications are suppressed to avoid startup spam.
-    for (auto& vd : m_layout.getVirtualDesktops()) {
+    for (auto &vd : m_layout.getVirtualDesktops()) {
         for (size_t i = 0; i < monitors.size(); ++i) {
             const auto wsId = computeWorkspaceIdFor(vd.getID(), i);
             vd.bindWorkspace(monitors[i].id, wsId);
@@ -100,8 +100,9 @@ bool CVirtualDesktopManager::syncFromHyprland() {
                     wsId, std::format("vd{}:{}", vd.getID(), monitors[i].name), /*silent=*/true);
 
                 if (created == -1) {
-                    AppLog::logWarn(std::format("syncFromHyprland: failed to create WS {} (VD {} on {})",
-                                                wsId, vd.getID(), monitors[i].name));
+                    AppLog::logWarn(
+                        std::format("syncFromHyprland: failed to create WS {} (VD {} on {})", wsId,
+                                    vd.getID(), monitors[i].name));
                     continue;
                 }
 
@@ -123,21 +124,22 @@ bool CVirtualDesktopManager::syncFromHyprland() {
 
     // Mark active desktop (best-effort) from the active monitor + active workspace.
     const auto activeMonId = m_hypr->getActiveMonitorID();
-    const auto activeWsId  = m_hypr->getActiveWorkspaceID();
+    const auto activeWsId = m_hypr->getActiveWorkspaceID();
     if (!activeMonId.has_value() || activeWsId < 0)
         return true;
 
     const auto it = std::find_if(monitors.begin(), monitors.end(),
-                                 [&](const auto& m) { return m.id == *activeMonId; });
+                                 [&](const auto &m) { return m.id == *activeMonId; });
     if (it == monitors.end())
         return true;
 
-    const auto activeIndex = static_cast<CHyprlandUtils::WorkspaceId>(
-        std::distance(monitors.begin(), it));
-    const CHyprlandUtils::WorkspaceId base     = activeIndex * m_workspaceStride;
+    const auto activeIndex =
+        static_cast<CHyprlandUtils::WorkspaceId>(std::distance(monitors.begin(), it));
+    const CHyprlandUtils::WorkspaceId base = activeIndex * m_workspaceStride;
     const CHyprlandUtils::WorkspaceId desktopId = activeWsId - base;
 
-    if (desktopId >= 1 && desktopId <= static_cast<CHyprlandUtils::WorkspaceId>(m_layout.getVirtualDesktopCount())) {
+    if (desktopId >= 1 &&
+        desktopId <= static_cast<CHyprlandUtils::WorkspaceId>(m_layout.getVirtualDesktopCount())) {
         m_layout.setActiveVirtualDesktop(static_cast<int>(desktopId));
         AppLog::logTrace(std::format("syncFromHyprland: active desktop detected as {}", desktopId));
     }
@@ -164,7 +166,8 @@ bool CVirtualDesktopManager::activateVirtualDesktop(int desktopId) {
         const auto wsId = computeWorkspaceIdFor(desktopId, i);
         if (!m_hypr->workspaceExists(wsId)) {
             // Optional name to make debugging easier.
-            (void)m_hypr->createWorkspace(wsId, std::format("vd{}:{}", desktopId, monitors[i].name));
+            (void)m_hypr->createWorkspace(wsId,
+                                          std::format("vd{}:{}", desktopId, monitors[i].name));
         }
 
         (void)m_hypr->setWorkspacePersistent(wsId, true);

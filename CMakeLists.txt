@@ -9,6 +9,22 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# Optional clang-tidy static analysis.
+# Enable with: cmake -B build -DENABLE_CLANG_TIDY=ON
+option(ENABLE_CLANG_TIDY "Run clang-tidy on project sources during build" OFF)
+if (ENABLE_CLANG_TIDY)
+    find_program(CLANG_TIDY_EXE NAMES clang-tidy REQUIRED
+        DOC "Path to clang-tidy executable")
+    message(STATUS "clang-tidy enabled: ${CLANG_TIDY_EXE}")
+    # --header-filter restricts diagnostics to our own headers only;
+    # Hyprland/system headers are marked SYSTEM and are already suppressed by
+    # clang-tidy, but the filter makes that boundary explicit.
+    set(CLANG_TIDY_CMD
+        "${CLANG_TIDY_EXE}"
+        "--header-filter=${CMAKE_SOURCE_DIR}/include/.*"
+    )
+endif()
+
 # Find Hyprland
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(HYPRLAND REQUIRED hyprland)
@@ -42,6 +58,14 @@ else()
         ${PROJECT_NAME} 
         PRIVATE 
         ${CMAKE_SOURCE_DIR}/include
+    )
+endif()
+
+# Wire up clang-tidy if enabled (set on target, not globally, to avoid
+# running it on FetchContent or other auto-generated targets).
+if (ENABLE_CLANG_TIDY)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        CXX_CLANG_TIDY "${CLANG_TIDY_CMD}"
     )
 endif()
 

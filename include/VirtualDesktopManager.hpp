@@ -5,12 +5,12 @@
  * @brief Orchestrator singleton for the VDM plugin.
  */
 
+#include "HyprlandUtils.hpp"
+#include "Layout.hpp"
+
 #include <cstddef>
 #include <string>
 #include <vector>
-
-#include "HyprlandUtils.hpp"
-#include "Layout.hpp"
 
 namespace VDM {
 
@@ -26,7 +26,7 @@ namespace VDM {
 class CVirtualDesktopManager {
 public:
     /** @brief Singleton access. */
-    static CVirtualDesktopManager& getInstance();
+    static CVirtualDesktopManager &getInstance();
 
     /**
      * @brief Initializes the manager.
@@ -42,7 +42,7 @@ public:
     void shutdown();
 
     /** @brief Returns the current layout model. */
-    const CLayout& getLayout() const { return m_layout; }
+    const CLayout &getLayout() const { return m_layout; }
 
     /** @brief Returns the number of managed virtual desktops. */
     int getVirtualDesktopCount() const { return m_layout.getVirtualDesktopCount(); }
@@ -76,14 +76,14 @@ private:
     CVirtualDesktopManager() = default;
     ~CVirtualDesktopManager() = default;
 
-    CVirtualDesktopManager(const CVirtualDesktopManager&) = delete;
-    CVirtualDesktopManager& operator=(const CVirtualDesktopManager&) = delete;
-    CVirtualDesktopManager(CVirtualDesktopManager&&) = delete;
-    CVirtualDesktopManager& operator=(CVirtualDesktopManager&&) = delete;
+    CVirtualDesktopManager(const CVirtualDesktopManager &) = delete;
+    CVirtualDesktopManager &operator=(const CVirtualDesktopManager &) = delete;
+    CVirtualDesktopManager(CVirtualDesktopManager &&) = delete;
+    CVirtualDesktopManager &operator=(CVirtualDesktopManager &&) = delete;
 
     bool m_initialized = false;
     int m_workspaceStride = 100;
-    CHyprlandUtils* m_hypr = nullptr;
+    CHyprlandUtils *m_hypr = nullptr;
     CLayout m_layout;
 
     std::vector<CHyprlandUtils::MonitorInfo> getSortedMonitors() const;
