@@ -67,7 +67,7 @@ namespace VDM::Commands {
             }
         }
 
-        if (vId < 0 || vId > vdeskCount) {
+        if (vId < 1 || vId > vdeskCount) {
             if (format == eHyprCtlOutputFormat::FORMAT_JSON) {
                 nlohmann::json j;
                 j["status"] = "error";
@@ -131,18 +131,19 @@ namespace VDM::Commands {
 
     std::string handleMonitorInfo(eHyprCtlOutputFormat format, const std::string args) {
         CVarList vars(args, 0, 's');
-        std::string_view monitorId = "0";
-        // if (vars.size() > 1) {
-        //     try {
-        //         monitorId = vars[1];
-        //     } catch (const std::exception&) {
-        //         // Not a number, monitorId remains -1
-        //     }
-        // }
+        std::string monitorId = "0";
+        if (vars.size() > 1)
+            monitorId = std::string(vars[1]);
 
         auto& hypr = CHyprlandUtils::get();
-        if (hypr.isInitialized() == false) {
-            return "Hyprland utils not initialized\n";
+        if (!hypr.isInitialized()) {
+            if (format == eHyprCtlOutputFormat::FORMAT_JSON) {
+                nlohmann::json j;
+                j["status"] = "error";
+                j["message"] = "Hyprland utils not initialized";
+                return j.dump(4);
+            }
+            return "Error: Hyprland utils not initialized\n";
         }
 
         auto monitorOpt = hypr.getMonitorInfo(monitorId);
